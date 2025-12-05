@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Sentimientos - Transporte Santiago</title>
+    <style>
+        /* ===== ESTILOS GENERALES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* ===== ENCABEZADO ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .header .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        /* ===== FORMULARIO ===== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .char-count {
+            text-align: right;
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        /* ===== ALERTAS Y ERRORES ===== */
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-error {
+            background-color: #fee;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        
+        /* ===== RESULTADOS ===== */
+        .result-container {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        .result-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-header h2 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .sentiment-badge {
+            display: inline-block;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .review-text {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            color: #555;
+            font-style: italic;
+        }
+        
+        /* ===== BARRAS DE PROBABILIDAD ===== */
+        .probabilities {
+            margin-top: 25px;
+        }
+        
+        .probabilities h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .prob-item {
+            margin-bottom: 15px;
+        }
+        
+        .prob-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .prob-bar-container {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 25px;
+            overflow: hidden;
+        }
+        
+        .prob-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .prob-negativo { background: #dc3545; }
+        .prob-neutro { background: #ffc107; }
+        .prob-positivo { background: #28a745; }
+        
+        /* ===== BOTÓN NUEVO ANÁLISIS ===== */
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            margin-top: 20px;
+        }
+        
+        /* ===== PIE DE PÁGINA ===== */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        /* ===== ICONOS ===== */
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .header .subtitle {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ENCABEZADO -->
+        <div class="header">
+            <h1>🚇 Análisis de Sentimientos</h1>
+            <p class="subtitle">Transporte Público de Santiago</p>
+            <span class="badge">Deep Learning - Evaluación 4</span>
+        </div>
+        
+        <!-- MENSAJES DE ERROR -->
+        {% if error %}
+        <div class="alert alert-error">
+            <strong>⚠️ Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+        
+        <!-- FORMULARIO DE ENTRADA -->
+        {% if not mostrar_resultado %}
+        
+        <!-- EJEMPLOS Y ADVERTENCIA -->
+        <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+            <strong>💡 Tip:</strong> El modelo fue entrenado con reseñas estructuradas. Para mejores resultados, usa frases como:
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>"Tomé metro en providencia, el servicio fue excelente"</li>
+                <li>"Viajé por bus en maipú, el conductor fue muy amable"</li>
+                <li>"Tomé metrotren, mucha aglomeración y mal servicio"</li>
+                <li>"Viajé por metro en hora punta, estaba muy limpio"</li>
+            </ul>
+        </div>
+        
+        <form method="POST" action="/predict" id="predictForm">
+            <div class="form-group">
+                <label for="resena">
+                    <span class="emoji">✍️</span>
+                    Ingresa tu reseña sobre el transporte público:
+                </label>
+                <textarea 
+                    name="resena" 
+                    id="resena" 
+                    placeholder="Ejemplo: Tomé metro en providencia, el servicio fue excelente..."
+                    required
+                    maxlength="500"
+                    oninput="updateCharCount()">{{ resena_original if resena_original }}</textarea>
+                <div class="char-count" id="charCount">0 / 500 caracteres</div>
+            </div>
+            
+            <button type="submit">
+                <span class="emoji">🔍</span>
+                Analizar Sentimiento
+            </button>
+        </form>
+        {% endif %}
+        
+        <!-- RESULTADOS DE LA PREDICCIÓN -->
+        {% if mostrar_resultado %}
+        <div class="result-container">
+            <div class="result-header">
+                <h2>Resultado del Análisis</h2>
+                <div class="sentiment-badge" style="background-color: {{ color }};">
+                    {% if sentimiento == "Positivo" %}
+                        😊 {{ sentimiento }}
+                    {% elif sentimiento == "Negativo" %}
+                        😞 {{ sentimiento }}
+                    {% else %}
+                        😐 {{ sentimiento }}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="review-text">
+                <strong>Reseña analizada:</strong><br>
+                "{{ resena_original }}"
+            </div>
+            
+            <!-- Indicador de reconocimiento de palabras -->
+            {% if porcentaje_reconocimiento < 50 %}
+            <div style="background: #fee; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #dc3545;">
+                <strong>⚠️ Advertencia:</strong> Solo se reconocieron {{ palabras_reconocidas }}/{{ palabras_totales }} palabras ({{ "%.0f"|format(porcentaje_reconocimiento) }}%).
+                El modelo fue entrenado con un vocabulario específico, por lo que la predicción puede no ser precisa.
+            </div>
+            {% elif porcentaje_reconocimiento < 80 %}
+            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                <strong>💡 Info:</strong> Se reconocieron {{ palabras_reconocidas }}/{{ palabras_totales }} palabras ({{ "%.0f"|format(porcentaje_reconocimiento) }}%).
+            </div>
+            {% else %}
+            <div style="background: #d4edda; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #28a745;">
+                <strong>✓ Excelente:</strong> Se reconocieron {{ palabras_reconocidas }}/{{ palabras_totales }} palabras ({{ "%.0f"|format(porcentaje_reconocimiento) }}%).
+            </div>
+            {% endif %}
+            
+            <div class="probabilities">
+                <h3>📊 Distribución de Probabilidades:</h3>
+                
+                <div class="prob-item">
+                    <div class="prob-label">
+                        <span>😞 Negativo</span>
+                        <span>{{ "%.1f"|format(prob_negativo) }}%</span>
+                    </div>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar prob-negativo" style="width: {{ prob_negativo }}%;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="prob-item">
+                    <div class="prob-label">
+                        <span>😐 Neutro</span>
+                        <span>{{ "%.1f"|format(prob_neutro) }}%</span>
+                    </div>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar prob-neutro" style="width: {{ prob_neutro }}%;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="prob-item">
+                    <div class="prob-label">
+                        <span>😊 Positivo</span>
+                        <span>{{ "%.1f"|format(prob_positivo) }}%</span>
+                    </div>
+                    <div class="prob-bar-container">
+                        <div class="prob-bar prob-positivo" style="width: {{ prob_positivo }}%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <form method="GET" action="/">
+                <button type="submit" class="btn-secondary">
+                    <span class="emoji">🔄</span>
+                    Analizar Nueva Reseña
+                </button>
+            </form>
+        </div>
+        {% endif %}
+        
+        <!-- PIE DE PÁGINA -->
+        <div class="footer">
+            <p>🎓 Proyecto de Machine Learning - Deep Learning con TensorFlow & Keras</p>
+            <p>Modelo: LSTM Bidireccional para Análisis de Sentimientos</p>
+        </div>
+    </div>
+    
+    <script>
+        // Contador de caracteres
+        function updateCharCount() {
+            const textarea = document.getElementById('resena');
+            const charCount = document.getElementById('charCount');
+            const count = textarea.value.length;
+            charCount.textContent = count + ' / 500 caracteres';
+            
+            if (count > 450) {
+                charCount.style.color = '#dc3545';
+            } else {
+                charCount.style.color = '#999';
+            }
+        }
+        
+        // Inicializar contador al cargar la página
+        window.onload = function() {
+            updateCharCount();
+        };
+    </script>
+</body>
+</html>
